@@ -69,7 +69,16 @@ class MainActivity : Activity() {
         intent.action = Intent.ACTION_VIEW
         intent.setDataAndType(uri, "image/*")
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        startActivity(intent)
+        getSharedPreferences(SettingsActivity.PREFS, MODE_PRIVATE)
+            .getString(SettingsActivity.KEY_PACKAGE, null)
+            ?.let { intent.setPackage(it) }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            // Chosen gallery was uninstalled: fall back to the system chooser
+            intent.setPackage(null)
+            startActivity(intent)
+        }
         finish()
     }
 

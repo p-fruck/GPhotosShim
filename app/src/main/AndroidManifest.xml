@@ -9,12 +9,24 @@
         <intent>
             <action android:name="android.media.action.STILL_IMAGE_CAMERA" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="image/*" />
+        </intent>
     </queries>
 
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
         tools:ignore="DataExtractionRules,MissingApplicationIcon">
+        <activity
+            android:name="com.google.android.apps.photos.SettingsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.google.android.apps.photos.MainActivity"
             android:clearTaskOnLaunch="true"
