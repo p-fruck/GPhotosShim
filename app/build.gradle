@@ -5,27 +5,38 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
 android {
     def localProperties = new Properties()
-    localProperties.load(new FileInputStream(rootProject.file("local.properties")))
+    def localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { localProperties.load(it) }
+    }
 
-    compileSdkVersion 31
-    buildToolsVersion '31.0.0'
+    namespace 'com.google.android.apps.photos'
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.google.android.apps.photos'
-        minSdkVersion 29
-        targetSdkVersion 31
-        versionCode 5
-        versionName "1.2.0"
+        minSdk 29
+        targetSdk 36
+        versionCode 6
+        versionName "1.3.0"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
     }
 
     signingConfigs {
         release {
-            storeFile file(localProperties["RELEASE_STORE_FILE"])
+            if (localProperties["RELEASE_STORE_FILE"]) storeFile file(localProperties["RELEASE_STORE_FILE"])
             storePassword localProperties["RELEASE_STORE_PASSWORD"]
             keyAlias localProperties["RELEASE_KEY_ALIAS"]
             keyPassword localProperties["RELEASE_KEY_PASSWORD"]

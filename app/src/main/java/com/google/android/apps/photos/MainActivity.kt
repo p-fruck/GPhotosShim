@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
+import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import java.lang.Exception
@@ -36,9 +37,9 @@ class MainActivity : Activity() {
 
         // Make sure that we have the READ_EXTERNAL_STORAGE permission,
         // for some stupid reason we need this permission to check if a URI is pending
-        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Log.i("PhotosShim", "No READ_EXTERNAL_STORAGE permission, requesting it")
-            requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), PERMISSIONS_INT)
+        if (checkSelfPermission(MEDIA_PERMISSION) != PackageManager.PERMISSION_GRANTED) {
+            Log.i("PhotosShim", "No media permission, requesting it")
+            requestPermissions(arrayOf(MEDIA_PERMISSION), PERMISSIONS_INT)
             // We can now quit the app, as GCam wil relaunch it again automatically
             return finish()
         }
@@ -90,7 +91,7 @@ class MainActivity : Activity() {
         if (requestCode != PERMISSIONS_INT) return // Check if this result is for us
         if (permissions.isEmpty() || grantResults.isEmpty()) return // Check if has useful data
         // And if it has the correct permission we can quit to relaunch with the right privileges
-        if (permissions[0] == Manifest.permission.READ_EXTERNAL_STORAGE) quit()
+        if (permissions[0] == MEDIA_PERMISSION) quit()
     }
 
     companion object {
@@ -102,16 +103,22 @@ class MainActivity : Activity() {
         // Random integer to identify app in permission callback
         private const val PERMISSIONS_INT = 755009201
 
+        private val MEDIA_PERMISSION =
+            if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES
+            else Manifest.permission.READ_EXTERNAL_STORAGE
+
         // Check if a URI for an image is still being processed by Google Camera
         fun isUriPending(context: Context, contentUri: Uri): Boolean {
             val proj = arrayOf(MediaStore.Images.Media.IS_PENDING)
 
+            val args = Bundle().apply {
+                putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_INCLUDE)
+            }
             val cursor = context.contentResolver
-                .query(contentUri, proj, null, null, null)
+                .query(contentUri, proj, args, null)
             val result =
-                if (cursor != null) {
+                if (cursor != null && cursor.moveToFirst()) {
                     // Get the data of the IS_PENDING property on the first result
-                    cursor.moveToFirst()
                     val columnIndexData = cursor.getColumnIndex(proj[0])
                     cursor.getInt(columnIndexData) != 0
                 } else {
