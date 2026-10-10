@@ -6,6 +6,6 @@ Fork of the original project to support Android 17.
 
 ## Usage
 
-- Install app
+- Install app. You can build you own APK or install from the [releases](https://github.com/p-fruck/GPhotosShim/releases). The attached APK is automatically signed using GitHub Actions.
 - Add storage scope permissions for `DCIM/Camera`. This is required for the shim to notice when a picture is taken/ready.
 - Optional: Launch GPhotosShim and select a default app to show photos (e.g. Immich)

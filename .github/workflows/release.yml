@@ -1,0 +1,61 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - name: Configure Android signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          echo "$KEYSTORE_BASE64" | base64 --decode \
+            > "$RUNNER_TEMP/release.jks"
+
+          cat > local.properties <<EOF
+          RELEASE_STORE_FILE=$RUNNER_TEMP/release.jks
+          RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD
+          RELEASE_KEY_ALIAS=$KEY_ALIAS
+          RELEASE_KEY_PASSWORD=$KEY_PASSWORD
+          EOF
+
+          ./gradlew --no-daemon assembleRelease
+
+          APK=$(find . -path '*/build/outputs/apk/release/*.apk' -type f | head -n 1)
+
+          test -n "$APK"
+          mkdir -p dist
+          cp "$APK" "dist/app-${GITHUB_REF_NAME}.apk"
+
+      - name: Create GitHub Release and upload APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/app-${GITHUB_REF_NAME}.apk" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
